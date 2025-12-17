@@ -31,7 +31,7 @@ jobs:
 
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     needs: tests
     steps:
       - name: Check out the repo
@@ -50,16 +50,11 @@ jobs:
           tags: pavelyakimovich2009/cicd_infra:1.0
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     needs: build_and_push_to_docker_hub
     steps:
-    - name: executing remote ssh commands to deploy
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        script: |
-          sudo docker pull pavelyakimovich2009/cicd_infra:1.0
-          sudo docker stop $(sudo docker ps -a -q)
-          sudo docker run --rm -d -p 5000:5000 pavelyakimovich2009/cicd_infra:1.0
+    - name: Deploy Docker container
+      run: |
+        sudo docker pull pavelyakimovich2009/cicd_infra:1.0
+        sudo docker stop $(sudo docker ps -a -q) || true
+        sudo docker run --rm -d -p 5000:5000 pavelyakimovich2009/cicd_infra:1.0
